@@ -22,6 +22,7 @@
 
 html, body {
     font-family: 'PixelMplus', sans-serif;
+    font-weight: bold;
     width: 100%;
     height: 100%;
     overflow: hidden;
