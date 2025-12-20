@@ -1,0 +1,19 @@
+#stage {
+    width: 100vw;
+    height: 100vh;
+    background: #aed4ffef;
+    position: relative;
+    overflow: hidden;
+}
+
+#qr-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 100;
+    box-shadow: 0 4px 6px #58a6ffef;
+}
