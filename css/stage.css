@@ -46,3 +46,7 @@ html, body {
     z-index: 100;
     box-shadow: 0 4px 6px #58a6ffef;
 }
+
+#qr-container p {
+    margin-bottom: 10px;
+}
