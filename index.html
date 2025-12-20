@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Controller</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/controller.css">
+</head>
+<body>
+
+    <div id="status-bar">Connecting...</div>
+
+    <div class="container">
+        <section class="control-section">
+            <h2 class="section-title">REACTION</h2>
+            <div class="grid-buttons reaction-grid">
+                <button id="btn-question" class="action-btn reaction-type" data-label="疑問">
+                    <span class="text">疑問</span>
+                </button>
+                <button id="btn-clap" class="action-btn reaction-type" data-label="拍手">
+                    <span class="text">拍手</span>
+                </button>
+                <button id="btn-surprise" class="action-btn reaction-type" data-label="驚く">
+                    <span class="text">驚く</span>
+                </button>
+                <button id="btn-okay" class="action-btn reaction-type" data-label="同意">
+                    <span class="text">同意</span>
+                </button>
+            </div>
+        </section>
+
+        <section class="control-section">
+            <h2 class="section-title">MESSAGE</h2>
+            <div class="grid-buttons text-grid">
+                <button id="btn-achive" class="action-btn text-type" data-text="偉業">
+                    <span class="text">偉業</span>
+                </button>
+                <button id="btn-thank" class="action-btn text-type" data-text="感謝">
+                    <span class="text">感謝</span>
+                </button>
+                <button id="btn-cheer" class="action-btn text-type" data-text="応援">
+                    <span class="text">応援</span>
+                </button>
+                <button id="btn-devotion" class="action-btn text-type" data-text="精進">
+                    <span class="text">精進</span>
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <script type="module" src="js/controller.js"></script>
+</body>
+</html>
