@@ -147,6 +147,9 @@ export function refreshClientId() {
 
 // Session ID 管理
 
+export const DEFAULT_SESSION_ID = '119af2e3-6a49-41df-a648-81c215b1cbfd';
+let sessionFallbackNotified = false;
+
 export function getSessionIdFromUrl() {
   if (!globalThis?.location?.search) return null;
   return new URLSearchParams(globalThis.location.search).get('sid');
@@ -154,8 +157,13 @@ export function getSessionIdFromUrl() {
 
 function ensureSessionId() {
   const sid = getSessionIdFromUrl();
-  if (!sid) throw new Error('Missing sid query parameter');
-  return sid;
+  if (sid && sid.trim()) return sid;
+
+  if (!sessionFallbackNotified) {
+    console?.info?.('Ku-Ki: sid missing, falling back to DEFAULT_SESSION_ID.');
+    sessionFallbackNotified = true;
+  }
+  return DEFAULT_SESSION_ID;
 }
 
 // 共通コンテキスト
