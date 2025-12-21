@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Male avatar">
+  <defs>
+    <linearGradient id="hairMale" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="20" fill="#f1f5f9" />
+  <circle cx="60" cy="60" r="44" fill="#eef2ff" stroke="#a5b4fc" stroke-width="3" />
+  <circle cx="60" cy="48" r="24" fill="url(#hairMale)" />
+  <circle cx="60" cy="64" r="22" fill="#e0f2fe" stroke="#60a5fa" stroke-width="3" />
+  <circle cx="49" cy="55" r="4" fill="#111827" />
+  <circle cx="71" cy="55" r="4" fill="#111827" />
+  <path d="M50 72c4 4 16 4 20 0" stroke="#0ea5e9" stroke-width="3" fill="none" stroke-linecap="round" />
+  <rect x="48" y="82" width="24" height="20" rx="10" fill="#c4b5fd" />
+  <rect x="44" y="94" width="32" height="8" rx="4" fill="#818cf8" />
+</svg>

@@ -4,17 +4,16 @@ body, html {
     padding: 0;
     width: 100%;
     height: 100%;
-    /* 背景：柔らかいオフホワイトのグラデーション */
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    color: #333333; /* 文字は真っ黒ではなく濃いグレー */
-    font-family: 'M PLUS Rounded 1c', sans-serif; /* 丸ゴシック */
+    color: #333333;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
     overflow: hidden;
     touch-action: manipulation;
 }
 
 /* ステータスバー */
 #status-bar {
-    background-color: #ffffff; /* 白背景 */
+    background-color: #ffffff;
     color: #888;
     text-align: center;
     font-size: 11px;
@@ -40,32 +39,32 @@ body, html {
     flex: 1;
     display: flex;
     flex-direction: column;
-    /* 白いカードのようなデザイン */
     background: #ffffff;
     border-radius: 24px;
     padding: 16px;
-    /* 柔らかく浮き上がる影 */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 4px 8px rgba(0,0,0,0.03);
     border: 1px solid rgba(255, 255, 255, 0.8);
+    overflow: visible;
 }
 
 .section-title {
     margin: 0 0 12px 0;
     font-size: 13px;
-    color: #999; /* タイトルは控えめに */
+    color: #999;
     letter-spacing: 2px;
     text-align: center;
     font-weight: 800;
     text-transform: uppercase;
 }
 
-/* グリッドレイアウト (2x2) */
+/* グリッドレイアウト */
 .grid-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     gap: 16px;
     flex: 1;
+    padding-bottom: 5px;
 }
 
 /* --- ボタン共通デザイン --- */
@@ -74,79 +73,94 @@ body, html {
     cursor: pointer;
     font-family: 'M PLUS Rounded 1c', sans-serif;
     font-weight: 800;
-    font-size: 1.2rem;
-    transition: all 0.15s cubic-bezier(0.25, 0.8, 0.25, 1); /* 心地よいバネのような動き */
+    font-size: 2.0rem;
+    transition: transform 0.1s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
-    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* タクタイル感のある影 */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-/* クリック時の動き（共通）：少し沈んで影が小さくなる */
-.action-btn:active {
-    transform: translateY(3px) scale(0.98);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 
-/* --- エリア1: リアクション用 (丸みが強く、ポップな色使い) --- */
+/* =========================================
+   エリア1: リアクション用 (変更なし)
+   ========================================= */
 .reaction-type {
-    border-radius: 30px; /* まんまるく */
+    border-radius: 30px;
     background: #ffffff;
-    border: 3px solid transparent; /* 色の枠線を準備 */
+    border: 3px solid transparent;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
-/* 各ボタンのアクセントカラー（枠線と文字色） */
-/* 疑問：黄色系 */
-#btn-question {
-    color: #fbc02d;
-    border-color: #fff9c4;
-    background: linear-gradient(to bottom right, #ffffff, #fffde7);
-}
-/* 拍手：オレンジ系 */
-#btn-clap {
-    color: #ff9800;
-    border-color: #ffe0b2;
-    background: linear-gradient(to bottom right, #ffffff, #fff3e0);
-}
-/* 驚く：赤ピンク系 */
-#btn-surprise {
-    color: #ff5252;
-    border-color: #ffcdd2;
-    background: linear-gradient(to bottom right, #ffffff, #ffebee);
-}
-/* 同意：緑系 */
-#btn-okay {
-    color: #4caf50;
-    border-color: #c8e6c9;
-    background: linear-gradient(to bottom right, #ffffff, #e8f5e9);
-}
-
-/* 押した時の光（リアクション用） */
 .reaction-type:active {
-    filter: brightness(0.95); /* 少し暗くして押した感を出す */
+    transform: translateY(4px) scale(0.96);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    filter: brightness(0.95);
+}
+
+#btn-question { color: #fbc02d; border-color: #fff9c4; background: linear-gradient(to bottom right, #ffffff, #fffde7); }
+#btn-clap     { color: #ff9800; border-color: #ffe0b2; background: linear-gradient(to bottom right, #ffffff, #fff3e0); }
+#btn-surprise { color: #ff5252; border-color: #ffcdd2; background: linear-gradient(to bottom right, #ffffff, #ffebee); }
+#btn-okay     { color: #4caf50; border-color: #c8e6c9; background: linear-gradient(to bottom right, #ffffff, #e8f5e9); }
+
+.corner-icon {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    pointer-events: none;
+    opacity: 0.9;
+    transition: transform 0.2s;
+}
+
+.reaction-type:active .corner-icon {
+    transform: rotate(-15deg) scale(1.4);
 }
 
 
-/* --- エリア2: テキスト用 (少し落ち着いた、フラットに近いデザイン) --- */
+/* =========================================
+   エリア2: テキスト用 (背景なし・画像小さめ)
+   ========================================= */
 .text-type {
-    border-radius: 16px; /* リアクションより少し角ばらせる */
-    background-color: #f1f3f5; /* 薄いグレー背景 */
-    border: 2px solid #e9ecef;
-    color: #555;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04); /* 影は控えめに */
+    /* 背景・枠・影を完全に消す */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    
+    /* 余白なし（中央揃えはflexで制御） */
+    padding: 0;
+    border-radius: 0; 
+    overflow: visible;
 }
 
+/* CSSのしっぽ削除 */
+.text-type::after {
+    content: none;
+}
+
+/* ★画像の設定（サイズ調整） */
+.center-icon {
+    /* ここで画像の大きさを調整できます (85%くらいがバランス良いです) */
+    width: 100%;
+    height: 100%; 
+    
+    object-fit: contain;
+    pointer-events: none;
+    
+    /* 任意：画像が背景に埋もれる場合は、以下のコメントアウトを外して
+       ドロップシャドウをつけると浮き上がって見えます */
+    /* filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); */
+}
+
+/* ★押した時の動き */
 .text-type:active {
-    background-color: #e2e6ea;
-    border-color: #dae0e5;
-}
-
-/* テキストを少し大きく */
-.text-type .text {
-    font-size: 1.3rem;
-    letter-spacing: 0.1rem;
+    /* グッと沈んで縮む */
+    transform: translateY(6px) scale(0.95);
+    filter: brightness(0.9);
 }
