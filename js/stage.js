@@ -34,7 +34,7 @@ const REACTION_CLASS_MAP = {
 const FALLBACK_AVATAR_IDS = ['Avatar(Female)', 'Avatar(Male)']; // アバター指定が無い場合に使用する SVG 名。
 
 function setupQrCode(sessionId) {
-    const controllerUrl = new URL(window.location.origin + '/'); // Controller ページの URL を生成。
+    const controllerUrl = new URL('./', window.location.href); // Controller ページの URL を生成（GitHub Pages 配信パスも含める）。
     if (sessionId) {
         controllerUrl.searchParams.set('sid', sessionId); // スキャン時に同じ sid を渡し、同一セッションに参加させる。
     }
