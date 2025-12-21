@@ -79,6 +79,21 @@ if (sessionId) {
 - `index.html?sid=session-abc123`
 - `stage.html?sid=session-abc123`
 
+> Note: セッション作成画面が未実装の間は、`ensureSession()` などが `sid` を取得できなかった場合、`DEFAULT_SESSION_ID` にフォールバックします。
+
+#### `DEFAULT_SESSION_ID`
+
+**説明**: `sid` クエリが指定されていないときに一時的に使用されるセッションID。画面実装後はこの定数を更新または削除してください。
+
+**現在値**: `119af2e3-6a49-41df-a648-81c215b1cbfd`
+
+**使用例**:
+```javascript
+import { DEFAULT_SESSION_ID, ensureSession } from './config.js';
+
+await ensureSession(DEFAULT_SESSION_ID);
+```
+
 ---
 
 ### Session 操作
@@ -86,6 +101,8 @@ if (sessionId) {
 #### `ensureSession(sessionId?, options?)`
 
 **説明**: セッションがサーバー側に存在するか確認します。存在しなければ作成します。
+
+`sessionId` を省略し、かつ URL に `sid` が含まれていない場合は `DEFAULT_SESSION_ID` が自動的に利用されます。
 
 **パラメータ**:
 - `sessionId` (string, optional) - セッションID。省略時は URL から抽出
