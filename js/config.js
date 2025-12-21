@@ -1,6 +1,9 @@
 // 設定・DB操作
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { envReadyPromise } from './env-loader.js';
+
+await envReadyPromise;
 
 // 設定
 
@@ -10,7 +13,7 @@ const PLACEHOLDER_ANON_KEY = '__REPLACE_WITH_SUPABASE_ANON_KEY__';
 const runtimeGlobal = typeof globalThis !== 'undefined' ? globalThis : {};
 
 function readValue(key, fallback) {
-  // .env から読み込む
+  // kuki.env から読み込む
   const env = runtimeGlobal.__env__ ?? runtimeGlobal.env;
   if (env && key in env && env[key] !== undefined && env[key] !== '') return env[key];
   return fallback;
@@ -37,6 +40,11 @@ const TABLES = {
   participants: 'participants',
   events: 'events',
 };
+
+// Realtime チャンネル定義
+function buildChannelName(sessionId) {
+  return `ku-ki:${sessionId}`;
+}
 
 // Supabaseクライアント
 
@@ -249,3 +257,13 @@ export function getSupabaseSettings() {
 }
 
 export const tableNames = TABLES;
+
+// Supabase クライアントの export
+export { ensureSupabaseClient as getSupabase };
+
+export { buildChannelName };
+
+// コンビニエンスメソッド
+export function getSupabaseClient() {
+  return ensureSupabaseClient();
+}
