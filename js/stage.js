@@ -20,16 +20,18 @@ const SCALE_MAX = 1.6; // ズームインの上限値。
 const SCALE_STEP = 0.08; // 拡大縮小のステップ幅。
 
 const REACTION_CLASS_MAP = {
-    clap: 'clap', // 拍手ボタン → is-clap アニメーション（今回の検証対象）。
+    clap: 'clap', // 拍手ボタン → is-clap アニメーション。
     surprise: 'surprise', // 驚きボタン → is-surprise アニメーション。
-    // question: 'question',
-    // okay: 'okay',
+    question: 'question', // 疑問ボタン → is-question アニメーション。
+    okay: 'okay', // 同意ボタン → is-okay アニメーション。
     // achive: 'achive',
     // thank: 'thank',
     // cheer: 'cheer',
     // devotion: 'devotion',
     // NOTE: DB の events.type / controller.js で送る type が変わったら必ず同期させること。
 };
+
+const STICKER_ACTIONS = new Set(['thank', 'devotion', 'cheer', 'achive']); // ステッカー表示対象。
 
 const FALLBACK_AVATAR_IDS = ['Avatar(Female)']; // アバター指定が無い場合は女性アバターで固定する。
 
@@ -285,7 +287,10 @@ function handleReaction(data) {
         showBubble(targetAvatar, bubbleText); // 吹き出しを表示して 2 秒後に消す。
     }
 
-    if (actionKey) {
+    const action = (data.action || data.type || data.action_type || '').toLowerCase();
+    if (STICKER_ACTIONS.has(action)) {
+        showSticker(targetAvatar, action); // ステッカー表示系リアクション。
+    } else if (actionKey) {
         playAnimation(targetAvatar, actionKey); // CSS アニメーションをトリガー。
     }
 }
@@ -344,6 +349,27 @@ function showBubble(avatar, text) {
     setTimeout(() => {
         bubble.classList.remove('show');
     }, 2000);
+}
+
+const stickerTimeoutMap = new WeakMap();
+
+function showSticker(avatar, action) {
+    const existing = avatar.querySelector('.sticker');
+    const sticker = existing || document.createElement('img');
+    sticker.className = 'sticker';
+    sticker.src = `assets/Controller_Components/${action}.png`;
+    sticker.alt = action;
+    if (!existing) avatar.appendChild(sticker);
+
+    sticker.classList.add('show');
+
+    if (stickerTimeoutMap.has(sticker)) {
+        clearTimeout(stickerTimeoutMap.get(sticker));
+    }
+    const timeoutId = setTimeout(() => {
+        sticker.classList.remove('show');
+    }, 2500);
+    stickerTimeoutMap.set(sticker, timeoutId);
 }
 
 initStage();

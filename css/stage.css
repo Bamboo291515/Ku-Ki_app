@@ -122,3 +122,21 @@ html, body {
     opacity: 1;
     transform: translate(-50%, -18px);
 }
+
+.avatar .sticker {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translate(-50%, -10px) scale(var(--stage-scale, 1));
+    width: 76px;
+    height: auto;
+    opacity: 0;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
+}
+
+.avatar .sticker.show {
+    opacity: 1;
+    transform: translate(-50%, -16px) scale(var(--stage-scale, 1));
+}
