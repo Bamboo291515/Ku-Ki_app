@@ -52,6 +52,7 @@ async function init() {
         statusBar.innerText = '初期化エラー'; // UI で異常を知らせる。
         statusBar.style.color = '#ef4444'; // 赤色でエラーを示す。
     }
+}
 
 // Realtime チャンネルへ接続し、Presence で在席通知、Broadcast でリアクション送信を行う。
 function connectToStageChannel() {
@@ -144,4 +145,3 @@ async function persistEvent(type) {
 
 // 実行開始。
 init(); // モジュール読み込み時に自動で初期化をキックする。
-}
