@@ -42,8 +42,8 @@ html, body {
     position: absolute;
     left: -6%;
     right: -6%;
-    top: 60%;
-    height: 45%;
+    top: 38%;
+    height: 70%;
     background: #f0e1a7;
     border-top-left-radius: 60% 22%;
     border-top-right-radius: 60% 22%;
@@ -55,18 +55,11 @@ html, body {
 #stage::after {
     content: '';
     position: absolute;
-    left: -10%;
-    right: -10%;
-    top: 55%;
-    height: 24%;
-    background: repeating-linear-gradient(
-        90deg,
-        transparent 0 8%,
-        rgba(224, 203, 92, 0.7) 8% 20%,
-        transparent 20% 26%
-    );
-    clip-path: ellipse(90% 120% at 50% 100%);
-    opacity: 0.55;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 0;
+    opacity: 0;
     pointer-events: none;
     z-index: 1;
 }
@@ -162,7 +155,45 @@ html, body {
     100% { transform: scale(1) rotate(0deg); }
 }
 
+@keyframes achive-anim {
+    /* UIチーム提供のアニメーションを受領したら、このキーフレームを置き換えてください */
+    0% { transform: translateY(0) scale(1); }
+    35% { transform: translateY(-18px) scale(1.12); }
+    60% { transform: translateY(-10px) scale(1.08); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes thank-anim {
+    /* UIチーム提供のアニメーションを受領したら、このキーフレームを置き換えてください */
+    0% { transform: rotate(0deg) scale(1); }
+    30% { transform: rotate(-6deg) scale(1.04); }
+    60% { transform: rotate(5deg) scale(1.02); }
+    100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes cheer-anim {
+    /* UIチーム提供のアニメーションを受領したら、このキーフレームを置き換えてください */
+    0% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(-12px) scale(1.08); }
+    50% { transform: translateY(0) scale(0.98); }
+    75% { transform: translateY(-8px) scale(1.05); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes devotion-anim {
+    /* UIチーム提供のアニメーションを受領したら、このキーフレームを置き換えてください */
+    0% { transform: scale(1); }
+    30% { transform: scale(1.05); }
+    55% { transform: scale(0.97); }
+    80% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
 .avatar.is-question { animation: question-anim 0.7s ease-out; }
 .avatar.is-clap { animation: clap-anim 0.45s ease-in-out; }
 .avatar.is-surprise { animation: surprise-anim 0.8s ease-out; }
 .avatar.is-okay { animation: okay-anim 0.6s ease-out; }
+.avatar.is-achive { animation: achive-anim 0.75s ease-out; }
+.avatar.is-thank { animation: thank-anim 0.6s ease-out; }
+.avatar.is-cheer { animation: cheer-anim 0.8s ease-out; }
+.avatar.is-devotion { animation: devotion-anim 1s ease-in-out; }

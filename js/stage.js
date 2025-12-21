@@ -3,6 +3,7 @@ import {
     getSessionIdFromUrl,
     getSupabaseClientIfAvailable,
     tableNames,
+    DEFAULT_SESSION_ID,
 } from './config.js';
 // NOTE: config.js のエクスポート名や返却形が変わった場合、この import と下部の Supabase 利用箇所（ensureSession / tableNames / Realtime 初期化）を合わせて更新すること。
 
@@ -22,6 +23,10 @@ const REACTION_CLASS_MAP = {
     clap: 'clap',
     surprise: 'surprise',
     okay: 'okay',
+    achive: 'achive',
+    thank: 'thank',
+    cheer: 'cheer',
+    devotion: 'devotion',
     // NOTE: DBのイベント種別や controller.js で送る action 値が変わったらここを更新すること。
 };
 
@@ -40,20 +45,11 @@ function setupQrCode(sessionId) {
 // NOTE: index.html のパスや sid パラメータの扱いが変わる場合は QR 生成処理を必ず同期すること。
 
 async function initStage() {
-    currentSessionId = getSessionIdFromUrl();
+    const sessionFromUrl = getSessionIdFromUrl();
+    currentSessionId = sessionFromUrl || DEFAULT_SESSION_ID;
     setupQrCode(currentSessionId);
 
-    if (!currentSessionId) {
-        console.warn('Session ID (sid) is required to connect to realtime.');
-        return;
-    }
-
-    try {
-        await ensureSession(currentSessionId);
-    } catch (error) {
-        console.error('Failed to ensure session:', error);
-        return;
-    }
+    setupScalingControls();
 
     supabaseClient = getSupabaseClientIfAvailable();
     if (!supabaseClient) {
@@ -61,12 +57,19 @@ async function initStage() {
         return;
     }
 
+    try {
+        await ensureSession(currentSessionId);
+    } catch (error) {
+        console.warn('Failed to ensure session in Supabase. Continuing with realtime only.', error);
+    }
+
     await loadInitialParticipants();
     setupRealtime(currentSessionId);
-    setupScalingControls();
 }
 
 function setupRealtime(sessionId) {
+    if (!supabaseClient || !sessionId) return;
+
     const channelName = `stage:${sessionId}`;
     realtimeChannel = supabaseClient.channel(channelName, {
         config: {
@@ -158,6 +161,8 @@ function renderAvaiars(state) {
             removeAvatar(userId);
         }
     });
+
+    stage.setAttribute('data-avatar-count', `${avatarRegistry.size}`);
 }
 
 function upsertAvatar(userId, meta = {}) {
@@ -175,7 +180,7 @@ function upsertAvatar(userId, meta = {}) {
         const { x, y } = computeAvatarPosition();
         avatar.style.left = `${x}%`;
         avatar.style.top = `${y}%`;
-        avatar.style.zIndex = `${Math.round(y) + 50}`;
+        avatar.style.zIndex = `${computeZIndex(y)}`;
 
         stage.appendChild(avatar);
         avatarRegistry.set(userId, avatar);
@@ -208,7 +213,7 @@ function computeAvatarPosition() {
     let attempts = 0;
     while (attempts < 12) {
         const x = 10 + Math.random() * 80; // avoid extreme edges
-        const y = 33 + Math.random() * 65; // bottom 2/3 of the screen
+        const y = 34 + Math.random() * 64; // bottom 2/3 of the screen
 
         const overlaps = existing.some((pos) =>
             Math.hypot(pos.left - x, pos.top - y) < 14
@@ -219,6 +224,15 @@ function computeAvatarPosition() {
     }
 
     return { x: 12 + Math.random() * 76, y: 45 + Math.random() * 50 };
+}
+
+function computeZIndex(yPercent) {
+    // 画面下側（y が大きいほど）を手前にする
+    const minZ = 60;
+    const maxZ = 150;
+    const clampedY = Math.min(100, Math.max(0, yPercent));
+    const ratio = (clampedY - 34) / (98 - 34); // 0 〜 1 に正規化（初期配置レンジ基準）
+    return Math.round(minZ + (maxZ - minZ) * ratio);
 }
 
 // ステージの拡大縮小
