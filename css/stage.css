@@ -34,6 +34,41 @@ html, body {
     background: #aed4ffef;
     position: relative;
     overflow: hidden;
+    --stage-scale: 1;
+}
+
+#stage::before {
+    content: '';
+    position: absolute;
+    left: -6%;
+    right: -6%;
+    top: 60%;
+    height: 45%;
+    background: #f0e1a7;
+    border-top-left-radius: 60% 22%;
+    border-top-right-radius: 60% 22%;
+    filter: drop-shadow(0 -8px 14px rgba(0, 0, 0, 0.06));
+    pointer-events: none;
+    z-index: 0;
+}
+
+#stage::after {
+    content: '';
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    top: 55%;
+    height: 24%;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent 0 8%,
+        rgba(224, 203, 92, 0.7) 8% 20%,
+        transparent 20% 26%
+    );
+    clip-path: ellipse(90% 120% at 50% 100%);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 1;
 }
 
 #qr-container {
@@ -51,3 +86,83 @@ html, body {
 #qr-container p {
     margin-bottom: 10px;
 }
+
+.avatar {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    transition: transform 0.2s ease-out;
+}
+
+.avatar-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.18));
+}
+
+.avatar .bubble {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translate(-50%, -12px);
+    min-width: 80px;
+    padding: 8px 10px;
+    background: #fff;
+    border: 2px solid #3b82f6;
+    border-radius: 14px;
+    font-size: 12px;
+    color: #1f2937;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+/* NOTE: 吹き出しやアバターサイズを別CSSから上書きする場合、stage.js 側の座標・重なりロジック（computeAvatarPosition, zIndex など）へ影響するので合わせて確認すること。 */
+
+.avatar .bubble.show {
+    opacity: 1;
+    transform: translate(-50%, -18px);
+}
+
+@keyframes question-anim {
+    /* UIチーム提供のアニメーションを受領したら、このキーフレームを置き換えてください */
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-16px) scale(1.03); }
+}
+
+@keyframes clap-anim {
+    /* UIチーム提供のアニメーションを受領したら、このキーフレームを置き換えてください */
+    0% { transform: scale(1); }
+    25% { transform: scale(1.08); }
+    50% { transform: scale(0.96); }
+    75% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes surprise-anim {
+    /* UIチーム提供のアニメーションを受領したら、このキーフレームを置き換えてください */
+    0% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-18px) rotate(-4deg); }
+    50% { transform: translateY(0) rotate(4deg); }
+    75% { transform: translateY(-12px) rotate(-2deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes okay-anim {
+    /* UIチーム提供のアニメーションを受領したら、このキーフレームを置き換えてください */
+    0% { transform: scale(1) rotate(0deg); }
+    40% { transform: scale(1.12) rotate(-3deg); }
+    70% { transform: scale(0.98) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.avatar.is-question { animation: question-anim 0.7s ease-out; }
+.avatar.is-clap { animation: clap-anim 0.45s ease-in-out; }
+.avatar.is-surprise { animation: surprise-anim 0.8s ease-out; }
+.avatar.is-okay { animation: okay-anim 0.6s ease-out; }
