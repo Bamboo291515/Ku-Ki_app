@@ -1,73 +1,73 @@
 import {
-    ensureSession,
-    getSessionIdFromUrl,
-    getSupabaseClientIfAvailable,
-    tableNames,
-    DEFAULT_SESSION_ID,
+    ensureSession, // Supabase 上でセッションを保証するための関数（sessions テーブル操作）。
+    getSessionIdFromUrl, // URL クエリ sid を取得してセッション識別に利用する関数。
+    getSupabaseClientIfAvailable, // Supabase クライアントが設定済みか安全に取得する関数。
+    tableNames, // Supabase テーブル名の定数（events / participants / sessions）。
+    DEFAULT_SESSION_ID, // sid が無い場合のフォールバック ID（GitHub Pages での手動動作確認用）。
 } from './config.js';
 // NOTE: config.js のエクスポート名や返却形が変わった場合、この import と下部の Supabase 利用箇所（ensureSession / tableNames / Realtime 初期化）を合わせて更新すること。
 
-const stage = document.getElementById('stage');
-const avatarRegistry = new Map();
-const avatarFallbackCache = new Map();
-let realtimeChannel = null;
-let supabaseClient = null;
-let currentSessionId = null;
-let scaleValue = 1;
+const stage = document.getElementById('stage'); // アバターを描画するメイン領域。
+const avatarRegistry = new Map(); // userId をキーとして生成済み DOM ノードをキャッシュする。
+const avatarFallbackCache = new Map(); // アバター未指定時に選んだデフォルトの記憶領域。
+let realtimeChannel = null; // Realtime チャンネルの参照（Presence / Broadcast を購読）。
+let supabaseClient = null; // Supabase クライアントの参照（DB 読み込みと Realtime を兼用）。
+let currentSessionId = null; // 画面が扱うセッション ID（sid または DEFAULT_SESSION_ID）。
+let scaleValue = 1; // ステージの拡大率（wheel で変更）。
 
-const SCALE_MIN = 0.6;
-const SCALE_MAX = 1.6;
-const SCALE_STEP = 0.08;
+const SCALE_MIN = 0.6; // ズームアウトの下限値。
+const SCALE_MAX = 1.6; // ズームインの上限値。
+const SCALE_STEP = 0.08; // 拡大縮小のステップ幅。
 
 const REACTION_CLASS_MAP = {
-    // question: 'question',
-    clap: 'clap',
+    clap: 'clap', // 拍手ボタン → is-clap アニメーション（今回の検証対象）。
+    // question: 'question', // ※ その他のリアクションは今回無効化するためコメントアウト。
     // surprise: 'surprise',
     // okay: 'okay',
     // achive: 'achive',
     // thank: 'thank',
     // cheer: 'cheer',
     // devotion: 'devotion',
-    // NOTE: DBのイベント種別や controller.js で送る action 値が変わったらここを更新すること。
+    // NOTE: DB の events.type / controller.js で送る type が変わったら必ず同期させること。
 };
 
-const FALLBACK_AVATAR_IDS = ['Avatar(Female)', 'Avatar(Male)'];
+const FALLBACK_AVATAR_IDS = ['Avatar(Female)', 'Avatar(Male)']; // アバター指定が無い場合に使用する SVG 名。
 
 function setupQrCode(sessionId) {
-    const controllerUrl = new URL(window.location.origin + '/');
+    const controllerUrl = new URL(window.location.origin + '/'); // Controller ページの URL を生成。
     if (sessionId) {
-        controllerUrl.searchParams.set('sid', sessionId);
+        controllerUrl.searchParams.set('sid', sessionId); // スキャン時に同じ sid を渡し、同一セッションに参加させる。
     }
 
     new QRCode(document.getElementById('qrcode-area'), {
-        text: controllerUrl.toString(),
-        width: 120,
-        height: 120,
+        text: controllerUrl.toString(), // QR コードの内容（Controller の参加用 URL）。
+        width: 120, // QR コードの幅。
+        height: 120, // QR コードの高さ。
     });
 }
 // NOTE: index.html のパスや sid パラメータの扱いが変わる場合は QR 生成処理を必ず同期すること。
 
 async function initStage() {
-    const sessionFromUrl = getSessionIdFromUrl();
-    currentSessionId = sessionFromUrl || DEFAULT_SESSION_ID;
-    setupQrCode(currentSessionId);
+    const sessionFromUrl = getSessionIdFromUrl(); // URL から sid を取得。
+    currentSessionId = sessionFromUrl || DEFAULT_SESSION_ID; // 指定が無い場合はデフォルト ID を採用。
+    setupQrCode(currentSessionId); // QR コードを表示して参加者に sid を共有する。
 
-    setupScalingControls();
+    setupScalingControls(); // スクロールによるズーム制御を有効化。
 
-    supabaseClient = getSupabaseClientIfAvailable();
+    supabaseClient = getSupabaseClientIfAvailable(); // Supabase クライアントを取得（設定漏れ時は null）。
     if (!supabaseClient) {
         console.warn('Supabase client is not configured. Stage will run offline.');
         return;
     }
 
     try {
-        await ensureSession(currentSessionId);
+        await ensureSession(currentSessionId); // sessions テーブル上でセッションの存在を保証。
     } catch (error) {
         console.warn('Failed to ensure session in Supabase. Continuing with realtime only.', error);
     }
 
-    await loadInitialParticipants();
-    setupRealtime(currentSessionId);
+    await loadInitialParticipants(); // participants テーブルから初期アバターを描画。
+    setupRealtime(currentSessionId); // Presence / Broadcast / DB 監視を開始。
 }
 
 function setupRealtime(sessionId) {
@@ -76,7 +76,8 @@ function setupRealtime(sessionId) {
     const channelName = `stage:${sessionId}`;
     realtimeChannel = supabaseClient.channel(channelName, {
         config: {
-            presence: { key: `stage-${sessionId}` },
+            // stage 側は閲覧専用のため固定キーで Presence に参加し、参加者側(client_id)の Presence を受信する。
+            presence: { key: `stage-observer-${sessionId}` },
         },
     });
 
@@ -138,7 +139,6 @@ async function loadInitialParticipants() {
             {
                 userId: row.client_id,
                 avatarId: row.avatar_id,
-                color: row.color,
             },
         ];
     });
@@ -152,6 +152,7 @@ function renderAvaiars(state) {
 
     Object.entries(state || {}).forEach(([presenceKey, metas]) => {
         metas.forEach((meta) => {
+            if (meta?.role === 'stage') return; // ステージ自身の Presence は描画対象外。
             const userId = meta?.userId || meta?.user_id || presenceKey;
             if (!userId) return;
             nextIds.add(userId);
@@ -270,54 +271,53 @@ function applyScale(next) {
 
 // リアクションモーションの適応
 function handleReaction(data) {
-    if (!data) return;
+    if (!data) return; // payload が空なら何もしない。
 
-    const actionKey = normalizeAction(data);
-    const userId = data.userId || data.user_id || data.participant_id || data.client_id;
-    if (!userId) return;
+    const actionKey = normalizeAction(data); // events.type / Broadcast の type から CSS 用クラスを決定。
+    const userId = data.userId || data.user_id || data.participant_id || data.client_id; // events.client_id と Presence メタを併用して発信者を特定。
+    if (!userId) return; // 識別子が無い場合は描画できないため終了。
 
-    const targetAvatar = document.getElementById(`avatar-${userId}`);
-    if (!targetAvatar) return;
+    const targetAvatar = document.getElementById(`avatar-${userId}`); // 対象ユーザーのアバター DOM を取得。
+    if (!targetAvatar) return; // まだ参加者が表示されていない場合はスキップ。
 
-    const bubbleText = resolveBubbleText(data);
+    const bubbleText = resolveBubbleText(data); // テキスト系イベントなら吹き出しに表示する内容を決定。
     if (bubbleText) {
-        showBubble(targetAvatar, bubbleText);
+        showBubble(targetAvatar, bubbleText); // 吹き出しを表示して 2 秒後に消す。
     }
 
     if (actionKey) {
-        playAnimation(targetAvatar, actionKey);
+        playAnimation(targetAvatar, actionKey); // CSS アニメーションをトリガー。
     }
 }
 
 function normalizeAction(data) {
-    const raw = data.action || data.type || data.action_type;
-    if (!raw) return null;
-    const lowered = String(raw).toLowerCase();
-    return REACTION_CLASS_MAP[lowered] ? REACTION_CLASS_MAP[lowered] : null;
+    const raw = data.action || data.type || data.action_type; // controller.js からの Broadcast / events.type から元の値を取得。
+    if (!raw) return null; // 値が無ければクラス化できない。
+    const lowered = String(raw).toLowerCase(); // 大文字小文字を吸収。
+    return REACTION_CLASS_MAP[lowered] ? REACTION_CLASS_MAP[lowered] : null; // マッピングが無い場合はアニメーション無し。
 }
 
 function resolveBubbleText(data) {
-    if (typeof data.text === 'string') return data.text;
-    if (data.payload?.content) return data.payload.content;
-    if (data.message) return data.message;
-    return null;
+    if (typeof data.text === 'string') return data.text; // Broadcast の text プロパティを最優先で採用。
+    if (data.message) return data.message; // 互換性のため message も確認。
+    return null; // 表示すべきテキストが無い場合。
 }
 
 function resolveAvatarId(userId, meta = {}) {
-    const fromMeta = meta.avatarId || meta.avatar_id;
+    const fromMeta = meta.avatarId || meta.avatar_id; // Presence メタまたは participants.avatar_id からアバター指定を取得。
     if (fromMeta) {
-        avatarFallbackCache.set(userId, fromMeta);
+        avatarFallbackCache.set(userId, fromMeta); // 次回のためにキャッシュ。
         return fromMeta;
     }
 
     if (avatarFallbackCache.has(userId)) {
-        return avatarFallbackCache.get(userId);
+        return avatarFallbackCache.get(userId); // 以前に決定したデフォルトを再利用。
     }
 
     const pick =
-        FALLBACK_AVATAR_IDS[Math.floor(Math.random() * FALLBACK_AVATAR_IDS.length)];
-    avatarFallbackCache.set(userId, pick);
-    return pick;
+        FALLBACK_AVATAR_IDS[Math.floor(Math.random() * FALLBACK_AVATAR_IDS.length)]; // 男女いずれかをランダムに選択。
+    avatarFallbackCache.set(userId, pick); // 同じユーザーで固定化するため記録。
+    return pick; // 選択したアバター ID を返却。
 }
 
 function playAnimation(element, actionName) {
