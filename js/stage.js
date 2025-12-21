@@ -20,14 +20,14 @@ const SCALE_MAX = 1.6;
 const SCALE_STEP = 0.08;
 
 const REACTION_CLASS_MAP = {
-    question: 'question',
+    // question: 'question',
     clap: 'clap',
-    surprise: 'surprise',
-    okay: 'okay',
-    achive: 'achive',
-    thank: 'thank',
-    cheer: 'cheer',
-    devotion: 'devotion',
+    // surprise: 'surprise',
+    // okay: 'okay',
+    // achive: 'achive',
+    // thank: 'thank',
+    // cheer: 'cheer',
+    // devotion: 'devotion',
     // NOTE: DBのイベント種別や controller.js で送る action 値が変わったらここを更新すること。
 };
 
