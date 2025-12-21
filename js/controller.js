@@ -1,138 +1,134 @@
 import {
-    DEFAULT_SESSION_ID,
-    ensureSession,
-    getOrCreateClientId,
-    getSessionIdFromUrl,
-    getSupabaseClientIfAvailable,
-    insertEvent,
-    upsertParticipant,
+    DEFAULT_SESSION_ID, // config.js で定義された sid のデフォルト値（sid 省略時の最終手段）。
+    ensureSession, // sessions テーブルに行が無い場合は作成し、既存なら取得するユーティリティ。
+    getOrCreateClientId, // localStorage を利用しつつ client_id を生成・再利用するユーティリティ。
+    getSessionIdFromUrl, // URL クエリ sid を抽出しセッション識別に使うユーティリティ。
+    getSupabaseClientIfAvailable, // Supabase URL/KEY が埋まっている場合にクライアントを返す安全ラッパー。
+    insertEvent, // events テーブルへ {session_id, client_id, type} を挿入するユーティリティ。
+    upsertParticipant, // participants テーブルへ {session_id, client_id, avatar_id} を upsert するユーティリティ。
 } from './config.js';
 
 // ステータス表示用の DOM 要素を取得する（通信状態を利用者に知らせるため）。
-const statusBar = document.getElementById('status-bar');
+const statusBar = document.getElementById('status-bar'); // index.html 側の #status-bar と紐付く。
 
 // URL から sid を取得し、指定が無い場合は規定のセッション ID にフォールバックする。
-const sessionId = getSessionIdFromUrl() || DEFAULT_SESSION_ID;
+const sessionId = getSessionIdFromUrl() || DEFAULT_SESSION_ID; // GitHub Pages でも sid が無ければデフォルトを利用。
 
 // 端末を一意に識別する client_id（participants / events で共通に利用）を取得する。
-const clientId = getOrCreateClientId();
+const clientId = getOrCreateClientId(); // QR スキャン後に生成され、同一ブラウザで継続利用される。
 
 // Supabase クライアントと Realtime チャンネルをモジュール全体で共有するための変数。
-let supabaseClient = null;
-let realtimeChannel = null;
+let supabaseClient = null; // Supabase 接続オブジェクトを保持（config.js の設定を利用）。
+let realtimeChannel = null; // Realtime 用のチャンネル参照を保持（Broadcast/Presence 送信用）。
 
 // 初期化処理。Supabase 設定の確認 → セッション保証 → 参加者登録 → Realtime 接続の順で進める。
 async function init() {
-    // Supabase 設定が空の場合は GitHub Pages 単体表示のみとする。
-    supabaseClient = getSupabaseClientIfAvailable();
+    // Supabase 設定が空の場合は GitHub Pages 単体表示のみとする（オフラインで UI だけ確認可能）。
+    supabaseClient = getSupabaseClientIfAvailable(); // __env__ などに URL/KEY が無い場合は null を返す。
     if (!supabaseClient) {
-        statusBar.innerText = 'Supabase未設定のためオフライン表示';
-        statusBar.style.color = '#f97316';
-        return;
+        statusBar.innerText = 'Supabase未設定のためオフライン表示'; // 利用者に設定不足を明示。
+        statusBar.style.color = '#f97316'; // オレンジ色で警告的に表示。
+        return; // DB 連携ができないため Realtime 処理は行わない。
     }
 
-    statusBar.innerText = 'Supabaseへ接続中...';
+    statusBar.innerText = 'Supabaseへ接続中...'; // 接続開始を表示。
 
     try {
         // セッションを作成または確認（sessions テーブル：id, created_at, title）。
-        await ensureSession(sessionId);
+        await ensureSession(sessionId); // sid が URL 由来かデフォルトかに関わらず DB 上で存在を担保。
 
         // 参加者情報を登録（participants テーブル：session_id, client_id, avatar_id）。
-        await upsertParticipant();
+        await upsertParticipant(); // avatar_id は未指定（null）で登録し、Presence と合わせて表示する。
 
         // join イベントを記録（events テーブル：session_id, client_id, type）。
-        await insertEvent('join');
+        await insertEvent('join'); // Clap 以外のイベントは送信しないが、参加記録として join は残す。
 
-        statusBar.innerText = 'Realtime接続準備中...';
+        statusBar.innerText = 'Realtime接続準備中...'; // 次のステップで Realtime に入ることを示す。
 
         // Presence + Broadcast の接続を開始する。
-        connectToStageChannel();
+        connectToStageChannel(); // stage 側の購読が動いていれば Presence/Broadcast が届く。
     } catch (error) {
-        console.error('初期化でエラーが発生しました', error);
-        statusBar.innerText = '初期化エラー';
-        statusBar.style.color = '#ef4444';
+        console.error('初期化でエラーが発生しました', error); // デバッグ用に詳細を出力。
+        statusBar.innerText = '初期化エラー'; // UI で異常を知らせる。
+        statusBar.style.color = '#ef4444'; // 赤色でエラーを示す。
     }
-}
 
 // Realtime チャンネルへ接続し、Presence で在席通知、Broadcast でリアクション送信を行う。
 function connectToStageChannel() {
-    // Supabase チャンネル名は設計意図に合わせて stage:{session_id} を使用する。
-    const channelName = `stage:${sessionId}`;
+    // Supabase チャンネル名は設計意図に合わせて stage:{session_id} を使用する（Docs の Realtime 想定に準拠）。
+    const channelName = `stage:${sessionId}`; // session_id ごとに独立したリアルタイムルームを形成。
 
-    // presence.key には client_id を用いてセッション内一意性を担保する。
+    // presence.key には client_id を用いてセッション内一意性を担保する（participants.client_id と一致させる）。
     realtimeChannel = supabaseClient.channel(channelName, {
-        config: { presence: { key: clientId } },
+        config: { presence: { key: clientId } }, // Presence のキーは controller 側 client_id。
     });
 
     // 接続状態を監視し、参加者として Presence トラッキングを開始する。
     realtimeChannel.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-            statusBar.innerText = `🟢 接続済 / ID: ${clientId.slice(0, 4)}`;
-            statusBar.style.color = '#22c55e';
+            statusBar.innerText = `🟢 接続済 / ID: ${clientId.slice(0, 4)}`; // 接続完了を短縮 ID とともに表示。
+            statusBar.style.color = '#22c55e'; // 緑色で正常を示す。
 
             // Presence に user_id と入室時刻を載せる（stage.js 側が user_id からアバターを紐付ける）。
             await realtimeChannel.track({
-                user_id: clientId,
-                joined_at: new Date().toISOString(),
+                user_id: clientId, // stage.js 側の handleReaction / presenceState で参照されるキー。
+                joined_at: new Date().toISOString(), // 参考情報として入室時刻を付与。
             });
         } else {
-            statusBar.innerText = '🔴 切断';
-            statusBar.style.color = '#ef4444';
+            statusBar.innerText = '🔴 切断'; // SUBSCRIBED 以外は未接続とみなし通知。
+            statusBar.style.color = '#ef4444'; // 赤色で異常を示す。
         }
     });
 
-    // ボタンイベントはチャンネル作成後に紐付ける。
-    setupButtons();
+    // ボタンイベントはチャンネル作成後に紐付ける（clap 以外は無効化する前提）。
+    setupButtons(); // Realtime が無いと送信できないため、チャンネル準備後に実行。
 }
 
 // ボタン押下をハンドリングし、Broadcast 送信と events テーブル記録を同時に行う。
 function setupButtons() {
-    // .action-btn クラスを持つ全てのボタンを取得する。
-    const buttons = document.querySelectorAll('.action-btn');
+    const clapButton = document.getElementById('btn-clap'); // clap 専用ボタンを取得（今回の動作確認では clap のみを使用）。
+    const otherButtons = [...document.querySelectorAll('.action-btn')].filter(
+        (btn) => btn !== clapButton // clap ボタン以外を抽出して個別に無効化する。
+    ); // clap 以外のボタン群を抽出（送信を無効化するために利用）。
 
-    buttons.forEach((btn) => {
-        btn.addEventListener('click', () => {
-            // 振動で触覚フィードバックを返す（対応端末のみ）。
-            if (navigator.vibrate) navigator.vibrate(40);
+    otherButtons.forEach((btn) => {
+        btn.disabled = true; // それ以外のリアクションを明示的に無効化（UI からも押せない状態にする）。
+        btn.title = 'clap 動作確認のため一時的に無効化しています'; // 無効化理由をツールチップで通知し混乱を防ぐ。
+    });
 
-            // クリック演出として一瞬スタイルを変更する。
-            btn.style.transition = 'none';
-            btn.style.backgroundColor = '#fff';
-            btn.style.opacity = '0.8';
-            setTimeout(() => {
-                btn.style.transition = 'all 0.3s';
-                btn.style.backgroundColor = '';
-                btn.style.opacity = '';
-            }, 50);
+    if (!clapButton) return; // 安全策：clap ボタンが存在しない場合は何もしない（DOM 変更時の耐性）。
 
-            // ボタン ID から "btn-" を除いた値をイベント種別として扱う（例: question, clap）。
-            const eventType = btn.id.replace('btn-', '');
+    clapButton.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(40); // 振動で触覚フィードバックを返す（対応端末のみ）。
 
-            // data-text を持つボタンはメッセージ系としてテキストを付与、それ以外はリアクション系。
-            const textContent = btn.hasAttribute('data-text')
-                ? btn.getAttribute('data-text')
-                : null;
+        clapButton.style.transition = 'none'; // 一瞬のハイライト演出を設定。
+        clapButton.style.backgroundColor = '#fff'; // ハイライト色を指定（白く光る）。
+        clapButton.style.opacity = '0.8'; // 不透明度を下げて押下感を演出。
+        setTimeout(() => {
+            clapButton.style.transition = 'all 0.3s'; // 元のトランジションに戻す。
+            clapButton.style.backgroundColor = ''; // 背景色をリセット。
+            clapButton.style.opacity = ''; // 不透明度をリセット。
+        }, 50); // 50ms だけ強調してすぐ元に戻す。
 
-            // Broadcast で即時反映（stage.js の handleReaction が type/text を使用）。
-            sendBroadcast(eventType, textContent);
+        const eventType = 'clap'; // 今回の検証対象である clap 固定のイベント種別（他は送らない）。
+        const textContent = null; // clap はテキストを伴わないため常に null を指定。
 
-            // DB への永続化（events.type に eventType を格納）。
-            persistEvent(eventType);
-        });
+        sendBroadcast(eventType, textContent); // Broadcast で即時反映（stage.js の handleReaction が type を使用）。
+        persistEvent(eventType); // DB への永続化（events.type に clap を保存）。
     });
 }
 
 // Realtime Broadcast でステージ側へ即時にリアクションを届ける。
 function sendBroadcast(type, text) {
-    if (!realtimeChannel) return;
+    if (!realtimeChannel) return; // Realtime が確立していない場合は送信をスキップ。
 
     realtimeChannel.send({
-        type: 'broadcast',
-        event: 'reaction',
+        type: 'broadcast', // Supabase Realtime Broadcast を利用。
+        event: 'reaction', // stage.js 側が購読しているイベント名。
         payload: {
-            client_id: clientId,
-            type,
-            text,
+            client_id: clientId, // 発信者識別（presenceState と紐付く）。
+            type, // clap 固定のリアクション種別。
+            text, // 今回は null 固定だがプロパティは残す。
         },
     });
 }
@@ -140,11 +136,12 @@ function sendBroadcast(type, text) {
 // events テーブルへ非同期に記録する（payload カラムは存在しないため type のみを保存）。
 async function persistEvent(type) {
     try {
-        await insertEvent(type);
+        await insertEvent(type); // config.js 経由で Supabase RPC を実施。
     } catch (error) {
-        console.error('イベント保存に失敗しました', error);
+        console.error('イベント保存に失敗しました', error); // 非同期保存失敗はコンソールに記録。
     }
 }
 
 // 実行開始。
-init();
+init(); // モジュール読み込み時に自動で初期化をキックする。
+}
