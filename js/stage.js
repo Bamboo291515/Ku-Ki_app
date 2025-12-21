@@ -21,8 +21,8 @@ const SCALE_STEP = 0.08; // 拡大縮小のステップ幅。
 
 const REACTION_CLASS_MAP = {
     clap: 'clap', // 拍手ボタン → is-clap アニメーション（今回の検証対象）。
-    // question: 'question', // ※ その他のリアクションは今回無効化するためコメントアウト。
-    // surprise: 'surprise',
+    surprise: 'surprise', // 驚きボタン → is-surprise アニメーション。
+    // question: 'question',
     // okay: 'okay',
     // achive: 'achive',
     // thank: 'thank',
@@ -31,7 +31,7 @@ const REACTION_CLASS_MAP = {
     // NOTE: DB の events.type / controller.js で送る type が変わったら必ず同期させること。
 };
 
-const FALLBACK_AVATAR_IDS = ['Avatar(Female)', 'Avatar(Male)']; // アバター指定が無い場合に使用する SVG 名。
+const FALLBACK_AVATAR_IDS = ['Avatar(Female)']; // アバター指定が無い場合は女性アバターで固定する。
 
 function setupQrCode(sessionId) {
     const controllerUrl = new URL('./', window.location.href); // Controller ページの URL を生成（GitHub Pages 配信パスも含める）。

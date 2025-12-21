@@ -1,5 +1,27 @@
 /* Avatar reaction animations (separated for clarity) */
 
+/* 驚き: ぽよんと跳ねる動き */
+@keyframes surprise-anim {
+    0% {
+        transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+        filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
+    }
+    30% {
+        transform: translate(-50%, -62%) scale(calc(var(--stage-scale, 1) * 1.12));
+        filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.2));
+    }
+    60% {
+        transform: translate(-50%, -46%) scale(calc(var(--stage-scale, 1) * 0.96));
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+    }
+}
+
+.avatar.is-surprise {
+    animation: surprise-anim 0.85s ease-out;
+}
+
 /* 非 clap アニメーションは無効化 */
 /*
 @keyframes question-anim { ... }

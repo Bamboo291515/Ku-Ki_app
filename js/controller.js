@@ -87,36 +87,39 @@ function connectToStageChannel() {
 
 // ボタン押下をハンドリングし、Broadcast 送信と events テーブル記録を同時に行う。
 function setupButtons() {
-    const clapButton = document.getElementById('btn-clap'); // clap 専用ボタンを取得（今回の動作確認では clap のみを使用）。
-    const otherButtons = [...document.querySelectorAll('.action-btn')].filter(
-        (btn) => btn !== clapButton // clap ボタン以外を抽出して個別に無効化する。
-    ); // clap 以外のボタン群を抽出（送信を無効化するために利用）。
+    const supportedButtons = new Map([
+        ['btn-clap', 'clap'],
+        ['btn-surprise', 'surprise'],
+    ]); // 現在動作確認対象のリアクション一覧。
 
-    otherButtons.forEach((btn) => {
-        btn.disabled = true; // それ以外のリアクションを明示的に無効化（UI からも押せない状態にする）。
-        btn.title = 'clap 動作確認のため一時的に無効化しています'; // 無効化理由をツールチップで通知し混乱を防ぐ。
+    document.querySelectorAll('.action-btn').forEach((button) => {
+        const action = supportedButtons.get(button.id);
+        if (!action) {
+            button.disabled = true; // 未対応のリアクションは UI から無効化する。
+            button.title = '拍手・驚く以外のリアクションは準備中です'; // 無効化理由をツールチップで伝える。
+            return;
+        }
+
+        button.addEventListener('click', () => {
+            if (navigator.vibrate) navigator.vibrate(40); // 振動で触覚フィードバックを返す（対応端末のみ）。
+
+            flashButton(button); // 視覚的な押下フィードバック。
+
+            sendBroadcast(action, null); // Broadcast で即時反映。
+            persistEvent(action); // DB への永続化。
+        });
     });
+}
 
-    if (!clapButton) return; // 安全策：clap ボタンが存在しない場合は何もしない（DOM 変更時の耐性）。
-
-    clapButton.addEventListener('click', () => {
-        if (navigator.vibrate) navigator.vibrate(40); // 振動で触覚フィードバックを返す（対応端末のみ）。
-
-        clapButton.style.transition = 'none'; // 一瞬のハイライト演出を設定。
-        clapButton.style.backgroundColor = '#fff'; // ハイライト色を指定（白く光る）。
-        clapButton.style.opacity = '0.8'; // 不透明度を下げて押下感を演出。
-        setTimeout(() => {
-            clapButton.style.transition = 'all 0.3s'; // 元のトランジションに戻す。
-            clapButton.style.backgroundColor = ''; // 背景色をリセット。
-            clapButton.style.opacity = ''; // 不透明度をリセット。
-        }, 50); // 50ms だけ強調してすぐ元に戻す。
-
-        const eventType = 'clap'; // 今回の検証対象である clap 固定のイベント種別（他は送らない）。
-        const textContent = null; // clap はテキストを伴わないため常に null を指定。
-
-        sendBroadcast(eventType, textContent); // Broadcast で即時反映（stage.js の handleReaction が type を使用）。
-        persistEvent(eventType); // DB への永続化（events.type に clap を保存）。
-    });
+function flashButton(button) {
+    button.style.transition = 'none'; // 一瞬のハイライト演出を設定。
+    button.style.backgroundColor = '#fff'; // ハイライト色を指定（白く光る）。
+    button.style.opacity = '0.8'; // 不透明度を下げて押下感を演出。
+    setTimeout(() => {
+        button.style.transition = 'all 0.3s'; // 元のトランジションに戻す。
+        button.style.backgroundColor = ''; // 背景色をリセット。
+        button.style.opacity = ''; // 不透明度をリセット。
+    }, 50); // 50ms だけ強調してすぐ元に戻す。
 }
 
 // Realtime Broadcast でステージ側へ即時にリアクションを届ける。
