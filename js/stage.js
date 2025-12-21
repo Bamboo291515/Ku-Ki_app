@@ -9,6 +9,7 @@ import {
 
 const stage = document.getElementById('stage');
 const avatarRegistry = new Map();
+const avatarFallbackCache = new Map();
 let realtimeChannel = null;
 let supabaseClient = null;
 let currentSessionId = null;
@@ -29,6 +30,8 @@ const REACTION_CLASS_MAP = {
     devotion: 'devotion',
     // NOTE: DBのイベント種別や controller.js で送る action 値が変わったらここを更新すること。
 };
+
+const FALLBACK_AVATAR_IDS = ['Avatar(Female)', 'Avatar(Male)'];
 
 function setupQrCode(sessionId) {
     const controllerUrl = new URL(window.location.origin + '/');
@@ -187,8 +190,8 @@ function upsertAvatar(userId, meta = {}) {
     }
 
     const imgEl = avatar.querySelector('img');
-    const avatarId = meta.avatarId || meta.avatar_id || 'avatar_01';
-    imgEl.src = `assets/avatars/${avatarId}.svg`;
+    const avatarId = resolveAvatarId(userId, meta);
+    imgEl.src = encodeURI(`assets/avatars/${avatarId}.svg`);
     imgEl.alt = `Avatar ${avatarId}`;
 
     if (meta.color) {
@@ -298,6 +301,23 @@ function resolveBubbleText(data) {
     if (data.payload?.content) return data.payload.content;
     if (data.message) return data.message;
     return null;
+}
+
+function resolveAvatarId(userId, meta = {}) {
+    const fromMeta = meta.avatarId || meta.avatar_id;
+    if (fromMeta) {
+        avatarFallbackCache.set(userId, fromMeta);
+        return fromMeta;
+    }
+
+    if (avatarFallbackCache.has(userId)) {
+        return avatarFallbackCache.get(userId);
+    }
+
+    const pick =
+        FALLBACK_AVATAR_IDS[Math.floor(Math.random() * FALLBACK_AVATAR_IDS.length)];
+    avatarFallbackCache.set(userId, pick);
+    return pick;
 }
 
 function playAnimation(element, actionName) {
