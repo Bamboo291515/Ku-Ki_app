@@ -40,8 +40,8 @@ async function init() {
         // 参加者情報を登録（participants テーブル：session_id, client_id, avatar_id）。
         await upsertParticipant(); // avatar_id は未指定（null）で登録し、Presence と合わせて表示する。
 
-        // join イベントを記録（events テーブル：session_id, client_id, type）。
-        await insertEvent('join'); // Clap 以外のイベントは送信しないが、参加記録として join は残す。
+        // join イベントは送らない（join 型は RPC の許可リストにないため）
+        // await insertEvent('join');
 
         statusBar.innerText = 'Realtime接続準備中...'; // 次のステップで Realtime に入ることを示す。
 
