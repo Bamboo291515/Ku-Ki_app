@@ -108,8 +108,22 @@ function getClient() {
 function generateClientId() {
   const crypto = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined;
   if (crypto?.randomUUID) return crypto.randomUUID();
-  const rand = Math.random().toString(36).slice(2, 10);
-  return `client-${Date.now()}-${rand}`;
+  
+  // Fallback: UUID v4-like generation (RFC 4122)
+  // Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  let uuid = '';
+  for (let i = 0; i < 36; i++) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) {
+      uuid += '-';
+    } else if (i === 14) {
+      uuid += '4'; // Version 4
+    } else if (i === 19) {
+      uuid += ((Math.random() * 4 | 8).toString(16)); // Variant bits
+    } else {
+      uuid += (Math.random() * 16 | 0).toString(16);
+    }
+  }
+  return uuid;
 }
 
 export function getOrCreateClientId() {
@@ -218,16 +232,15 @@ export async function ensureSession(sessionId = ensureSessionId(), { title } = {
 export async function upsertParticipant({ avatarId } = {}) {
   await ensureSession();
 
+  const context = buildContext();
   const { data, error } = await getClient()
-    .from(TABLES.participants)
-    .upsert(
-      { ...buildContext(), avatar_id: avatarId ?? null },
-      { onConflict: ['session_id', 'client_id'] }
-    )
-    .select('*')
-    .single();
+    .rpc('register_participant', {
+      p_session_id: context.session_id,
+      p_client_id: context.client_id,
+      p_avatar_id: avatarId ?? null,
+    });
   if (error) throw error;
-  return data;
+  return { id: data, session_id: context.session_id, client_id: context.client_id, avatar_id: avatarId ?? null };
 }
 
 // Event操作
@@ -235,11 +248,15 @@ export async function upsertParticipant({ avatarId } = {}) {
 export async function insertEvent(type) {
   await ensureSession();
 
+  const context = buildContext();
   const { data, error } = await getClient()
-    .from(TABLES.events)
-    .insert({ ...buildContext(), type });
+    .rpc('send_reaction', {
+      p_session_id: context.session_id,
+      p_client_id: context.client_id,
+      p_type: type,
+    });
   if (error) throw error;
-  return data;
+  return { id: data, session_id: context.session_id, client_id: context.client_id, type };
 }
 
 // ヘルパー
