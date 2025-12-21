@@ -1,7 +1,5 @@
 /* Avatar reaction animations (separated for clarity) */
 
-<<<<<<< ours
-=======
 /* 疑問: ひょいっと左右に揺れる */
 @keyframes question-anim {
     0% { transform: translate(-50%, -50%) rotate(0deg) scale(var(--stage-scale, 1)); }
@@ -15,7 +13,6 @@
     animation: question-anim 0.9s ease-out;
 }
 
->>>>>>> theirs
 /* 驚き: ぽよんと跳ねる動き */
 @keyframes surprise-anim {
     0% {
@@ -38,25 +35,6 @@
     animation: surprise-anim 0.85s ease-out;
 }
 
-<<<<<<< ours
-/* 非 clap アニメーションは無効化 */
-/*
-@keyframes question-anim { ... }
-@keyframes surprise-anim { ... }
-@keyframes okay-anim { ... }
-@keyframes achive-anim { ... }
-@keyframes thank-anim { ... }
-@keyframes cheer-anim { ... }
-@keyframes devotion-anim { ... }
-.avatar.is-question { animation: question-anim 0.7s ease-out; }
-.avatar.is-surprise { animation: surprise-anim 0.8s ease-out; }
-.avatar.is-okay { animation: okay-anim 0.6s ease-out; }
-.avatar.is-achive { animation: achive-anim 0.75s ease-out; }
-.avatar.is-thank { animation: thank-anim 0.6s ease-out; }
-.avatar.is-cheer { animation: cheer-anim 0.8s ease-out; }
-.avatar.is-devotion { animation: devotion-anim 1s ease-in-out; }
-*/
-=======
 /* 同意: うなずくように縮む */
 @keyframes okay-anim {
     0% { transform: translate(-50%, -50%) scale(var(--stage-scale, 1)); }
@@ -68,7 +46,6 @@
 .avatar.is-okay {
     animation: okay-anim 0.7s ease-out;
 }
->>>>>>> theirs
 
 /* clap アニメーション: データURI化されたSVGを背景として表示（SVG内で動作） */
 .avatar.is-clap {

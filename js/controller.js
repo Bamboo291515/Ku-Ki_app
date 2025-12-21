@@ -90,17 +90,7 @@ function setupButtons() {
     const supportedButtons = new Map([
         ['btn-clap', 'clap'],
         ['btn-surprise', 'surprise'],
-<<<<<<< ours
     ]); // 現在動作確認対象のリアクション一覧。
-=======
-        ['btn-question', 'question'],
-        ['btn-okay', 'okay'],
-        ['btn-thank', 'thank'],
-        ['btn-devotion', 'devotion'],
-        ['btn-cheer', 'cheer'],
-        ['btn-achive', 'achive'],
-    ]); // 現在対応するリアクション一覧。
->>>>>>> theirs
 
     document.querySelectorAll('.action-btn').forEach((button) => {
         const action = supportedButtons.get(button.id);
